@@ -1,0 +1,178 @@
+{
+  "name": "My workflow 2",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "8d634f17-1dab-449f-8684-8e162cdd2db5",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "resource": "folder",
+        "operation": "search",
+        "query": "BCI Chicago Office (SAMPLE)"
+      },
+      "type": "n8n-nodes-base.microsoftOneDrive",
+      "typeVersion": 1,
+      "position": [
+        208,
+        0
+      ],
+      "id": "709a9c07-06b2-4c57-806c-bd610dbb4eb2",
+      "name": "Search a folder",
+      "credentials": {
+        "microsoftOneDriveOAuth2Api": {
+          "id": "TMFtaAjGAFIFmMJP",
+          "name": "Microsoft Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "folder",
+        "folderId": "959849E99D37856F!s8bb888607f584fa380814c733e369278"
+      },
+      "type": "n8n-nodes-base.microsoftOneDrive",
+      "typeVersion": 1,
+      "position": [
+        416,
+        0
+      ],
+      "id": "03323606-1531-468f-842d-361ec07a9f84",
+      "name": "Get items in a folder",
+      "credentials": {
+        "microsoftOneDriveOAuth2Api": {
+          "id": "TMFtaAjGAFIFmMJP",
+          "name": "Microsoft Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "folder",
+        "folderId": "959849E99D37856F!s26d36b0f4e5945e2ab5115208174de98"
+      },
+      "type": "n8n-nodes-base.microsoftOneDrive",
+      "typeVersion": 1,
+      "position": [
+        624,
+        0
+      ],
+      "id": "56d45164-587e-4f4d-8867-c297fbf99b84",
+      "name": "Get items in a folder1",
+      "credentials": {
+        "microsoftOneDriveOAuth2Api": {
+          "id": "TMFtaAjGAFIFmMJP",
+          "name": "Microsoft Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://graph.microsoft.com/v1.0/me/drive/items/6dee9e4e-8ada-437e-b20c-06b329b5c9ee/workbook/worksheets('Expenses')/range(address='Expenses!A1:F100')",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "microsoftOneDriveOAuth2Api",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        832,
+        0
+      ],
+      "id": "e63b5cd0-3d3f-4e91-a74a-ee15329615e7",
+      "name": "HTTP Request",
+      "credentials": {
+        "microsoftOneDriveOAuth2Api": {
+          "id": "TMFtaAjGAFIFmMJP",
+          "name": "Microsoft Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// The input data from the HTTP Request node\nconst data = items[0].json;\n\n// The 'values' is an array of rows, where the first row is headers\nconst rows = data.values;\n\n// First row contains headers\nconst headers = rows[0];\n\n// The rest are data rows\nconst dataRows = rows.slice(1);\n\n// Map each row's values to an object with keys from headers\nconst transformed = dataRows.map(row => {\n  let obj = {};\n  headers.forEach((header, index) => {\n    obj[header] = row[index];\n  });\n  return obj;\n});\n\n// Return transformed data in n8n format\nreturn transformed.map(item => ({ json: item }));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1040,
+        0
+      ],
+      "id": "2b9e761d-0850-4b31-801a-3b2256b979f8",
+      "name": "Code"
+    }
+  ],
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Search a folder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search a folder": {
+      "main": [
+        [
+          {
+            "node": "Get items in a folder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get items in a folder": {
+      "main": [
+        [
+          {
+            "node": "Get items in a folder1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get items in a folder1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "pinData": {},
+  "triggerCount": 0,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  }
+}

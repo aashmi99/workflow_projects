@@ -1,0 +1,187 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "d17156d5-5d05-4a7c-aa21-a3916363c6b5",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "url": "https://aashmi99.atlassian.net/rest/api/3/project",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "937f5524-d90b-43e0-8499-1528a85b64ab",
+      "name": "HTTP Request",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "GGDY2iE8Ypby0N9a",
+          "name": "Unnamed credential 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "returnAll": true,
+        "options": {
+          "jql": "=project = SUP\n\n\n\n"
+        }
+      },
+      "type": "n8n-nodes-base.jira",
+      "typeVersion": 1,
+      "position": [
+        416,
+        0
+      ],
+      "id": "ce6b2156-73ac-48da-87a4-c9186e40c732",
+      "name": "Get many issues",
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "credentials": {
+        "jiraSoftwareCloudApi": {
+          "id": "GAQv3bYGygVBYn7c",
+          "name": "Jira SW Cloud account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => {\n  const issue = item.json;\n\n  // Get the raw description\n  const rawDescription = issue.fields.description || '';\n\n  // Clean it up\n  const cleanedDescription = rawDescription\n    .replace(/\\\\n/g, '\\n')                          // Convert escaped newlines\n    .replace(/\\[([^\\]]+)\\]\\([^)]+\\)/g, '$1')        // Convert [email](mailto:email) to just email\n    .replace(/<\\/?[^>]+(>|$)/g, \"\")                 // Remove any HTML tags (just in case)\n    .replace(/\\s+/g, ' ')                           // Normalize spacing\n    .trim();\n\n  return {\n    json: {\n      Summary: issue.fields.summary,\n      Status: issue.fields.status.name,\n      Assignee: issue.fields.assignee ? issue.fields.assignee.displayName : 'Unassigned',\n      Reporter: issue.fields.reporter.displayName,\n      Description: cleanedDescription, // ⬅️ use this cleaned version\n    }\n  };\n});\n\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        624,
+        0
+      ],
+      "id": "815dff1b-d149-484c-8a8b-e273c2e40409",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-3.5-turbo",
+          "mode": "list",
+          "cachedResultName": "GPT-3.5-TURBO"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Extract the user's information from the following Jira ticket description. Provide the output as a JSON object with the following keys exactly: \"firstName\", \"lastName\", \"email\", and \"location\". Use camelCase format.\n\nJira ticket description:\n{{ $json[\"Description\"] }}\n\n\n"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        832,
+        0
+      ],
+      "id": "8e9ca361-5f05-4901-a083-32acd66a3c9e",
+      "name": "Message a model",
+      "credentials": {
+        "openAiApi": {
+          "id": "jZAYQnSaRNhphOSC",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => {\n  const content = item.json.message?.content;\n  if (!content) return { json: {} };\n\n  const data = JSON.parse(content);\n\n  return {\n    json: {\n      \"First Name\": data.firstName || '',\n      \"Last Name\": data.lastName || '',\n      \"Email\": data.email || '',\n      \"Location\": data.location || ''\n    }\n  };\n});\n\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1184,
+        0
+      ],
+      "id": "b56f1305-ab5c-45a3-8a56-78da96c76ca6",
+      "name": "Code1"
+    }
+  ],
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Get many issues",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many issues": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "pinData": {},
+  "triggerCount": 0,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  }
+}

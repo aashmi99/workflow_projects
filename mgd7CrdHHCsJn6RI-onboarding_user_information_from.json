@@ -1,0 +1,210 @@
+{
+  "name": "onboarding user information from",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -176,
+        224
+      ],
+      "id": "164614da-f561-4162-8399-ef839c5958b2",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "documentId": {
+          "__rl": true,
+          "value": "16dt--dP50xTwxWVo7p-5FlssA6UCpzxmnqyA7Sko7gM",
+          "mode": "list",
+          "cachedResultName": "sample names",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/16dt--dP50xTwxWVo7p-5FlssA6UCpzxmnqyA7Sko7gM/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/16dt--dP50xTwxWVo7p-5FlssA6UCpzxmnqyA7Sko7gM/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        224
+      ],
+      "id": "4a7cecbd-6493-4f2d-a4da-7b9883307e51",
+      "name": "Google Sheets Trigger",
+      "credentials": {
+        "googleSheetsTriggerOAuth2Api": {
+          "id": "DNvsPAwumg73DQ1Z",
+          "name": "Google Sheets Trigger account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1f500927-2298-47cb-9f18-c8a5c9314201",
+              "name": "Name:",
+              "value": "={{ $json['Name:'] }}",
+              "type": "string"
+            },
+            {
+              "id": "4362a54b-ed38-40bc-98fe-4db8d8485cc0",
+              "name": "Email ID:",
+              "value": "={{ $json['Email ID:'] }}",
+              "type": "string"
+            },
+            {
+              "id": "4f57fdd6-d0e7-4e57-acde-490feed942df",
+              "name": "Password:",
+              "value": "={{ $json['Password:'] }}",
+              "type": "string"
+            },
+            {
+              "id": "dc3a67fa-9631-477b-a1b9-8861340327dc",
+              "name": "Personal Email: ",
+              "value": "={{ $json['Personal Email: '] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        224,
+        224
+      ],
+      "id": "e69e175d-04f2-49c8-83ce-99dfcadbd4d0",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "jsCode": "const tableData = $input.all().map((item) => item.json);\nreturn tableData;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        224
+      ],
+      "id": "fa1e0e4e-ffe6-40e5-a7d2-7bd2c143f607",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "batchSize": 4,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        624,
+        256
+      ],
+      "id": "6af84585-dfa9-412e-b60a-e05d6d0664b1",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "toRecipients": "={{ $json['Personal Email: '] }}",
+        "subject": "New Hire Credentials",
+        "bodyContent": "=Hi Teammate,\n\nID: {{ $json['Email ID:'] }}\n\nPassword:{{ $json['Password:'] }}\n\nPlease change the temporary password to your own as soon as you login. \n\nThank you!",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.microsoftOutlook",
+      "typeVersion": 2,
+      "position": [
+        864,
+        128
+      ],
+      "id": "cdd8ec6f-ca3e-4648-bf8f-5fbd8e4220e9",
+      "name": "Send a message",
+      "webhookId": "2a9a453b-3b5c-4daa-b45f-d95dd771f070",
+      "executeOnce": false,
+      "credentials": {
+        "microsoftOutlookOAuth2Api": {
+          "id": "hc4ijo7IaIDipFx8",
+          "name": "Microsoft Outlook account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Google Sheets Trigger": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "pinData": {},
+  "triggerCount": 0,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  }
+}
