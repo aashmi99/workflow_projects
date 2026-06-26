@@ -1,0 +1,250 @@
+{
+  "name": "Document Summarization Pipeline",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "documentId": {
+          "__rl": true,
+          "value": "1b_gqK6g_znLH8p-DL2qfTsRLYnzKRRYglrU7lMLzbws",
+          "mode": "list",
+          "cachedResultName": "Document Summarization Pipeline",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1b_gqK6g_znLH8p-DL2qfTsRLYnzKRRYglrU7lMLzbws/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1b_gqK6g_znLH8p-DL2qfTsRLYnzKRRYglrU7lMLzbws/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "62689774-0a8f-46e3-8e44-ec22b1668378",
+      "name": "Google Sheets Trigger",
+      "credentials": {
+        "googleSheetsTriggerOAuth2Api": {
+          "id": "SIfk5i9BLYsNFVOn",
+          "name": "Google Sheets Trigger OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "responses": {
+          "values": [
+            {
+              "content": "=You are a document analysis assistant. Analyze the following text and respond with ONLY a raw JSON object, no markdown, no code fences, no explanation.\n\nUse exactly these keys:\n- \"summary\": a 2-3 sentence summary of the text\n- \"key_points\": a list of 3-5 key points as a single string, separated by semicolons\n- \"category\": one word category for the document (e.g. Technology, Finance, Healthcare, Legal, HR)\n\nText to analyze:\n{{ $json['Document Text'] }}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        208,
+        0
+      ],
+      "id": "691a119a-00c6-442c-b2e3-a4ccc3c48bc1",
+      "name": "Message a model",
+      "credentials": {
+        "openAiApi": {
+          "id": "Qd8dgs1JM4baW6Ms",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => {\n  const text = item.json.output?.[0]?.content?.[0]?.text || '';\n  \n  const clean = text\n    .replace(/```json\\n?/gi, '')\n    .replace(/```\\n?/gi, '')\n    .trim();\n\n  const data = JSON.parse(clean);\n\n  return {\n    json: {\n      \"Summary\": data.summary || '',\n      \"Key Points\": data.key_points || '',\n      \"Category\": data.category || ''\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        560,
+        0
+      ],
+      "id": "2a7458fe-1a32-4a52-853d-f1c1eaa228b2",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1b_gqK6g_znLH8p-DL2qfTsRLYnzKRRYglrU7lMLzbws",
+          "mode": "list",
+          "cachedResultName": "Document Summarization Pipeline",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1b_gqK6g_znLH8p-DL2qfTsRLYnzKRRYglrU7lMLzbws/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1b_gqK6g_znLH8p-DL2qfTsRLYnzKRRYglrU7lMLzbws/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Status": "pending ",
+            "Summary": "={{ $json['Summary'] }}",
+            "Key Points": "={{ $json['Key Points'] }}",
+            "Category": "={{ $json['Category'] }}",
+            "row_number": 2
+          },
+          "matchingColumns": [
+            "row_number"
+          ],
+          "schema": [
+            {
+              "id": "Document Text",
+              "displayName": "Document Text",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Summary",
+              "displayName": "Summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Key Points",
+              "displayName": "Key Points",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Category",
+              "displayName": "Category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Status",
+              "displayName": "Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        768,
+        0
+      ],
+      "id": "c0fe4ecb-16ed-4ae8-8755-1a1725d9c74f",
+      "name": "Update row in sheet",
+      "alwaysOutputData": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "By0QvzZ4YvVtn0rF",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Google Sheets Trigger": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "9878808d-e634-4dee-932f-7fa4351d28a9",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "68925c32f4d9302ecd204d1aa9a62f1dee5c7ff0aedc9a2df163a831d33dde5b"
+  },
+  "nodeGroups": [],
+  "id": "1NGoEgVHJpcyJ7vi",
+  "tags": []
+}
