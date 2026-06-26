@@ -1,0 +1,221 @@
+{
+  "name": "Employee Onboarding Automation",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1040,
+        96
+      ],
+      "id": "fd9624b1-e6d1-4dc6-866d-c1c5495eeb60",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "documentId": {
+          "__rl": true,
+          "value": "1I1imQWrdYJYkQ-TADk9u21SniwcP8Phuae2loTX4IUo",
+          "mode": "list",
+          "cachedResultName": "Employee Onboarding",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1I1imQWrdYJYkQ-TADk9u21SniwcP8Phuae2loTX4IUo/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1I1imQWrdYJYkQ-TADk9u21SniwcP8Phuae2loTX4IUo/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTrigger",
+      "typeVersion": 1,
+      "position": [
+        -864,
+        96
+      ],
+      "id": "9d32227c-1874-4c69-926d-7e06c3c77292",
+      "name": "Google Sheets Trigger",
+      "credentials": {
+        "googleSheetsTriggerOAuth2Api": {
+          "id": "SIfk5i9BLYsNFVOn",
+          "name": "Google Sheets Trigger OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1f500927-2298-47cb-9f18-c8a5c9314201",
+              "name": "First Name:",
+              "value": "={{ $json['First Name'] }}",
+              "type": "string"
+            },
+            {
+              "id": "4362a54b-ed38-40bc-98fe-4db8d8485cc0",
+              "name": "Last Name:",
+              "value": "={{ $json['Last Name'] }}",
+              "type": "string"
+            },
+            {
+              "id": "4f57fdd6-d0e7-4e57-acde-490feed942df",
+              "name": "Email: ",
+              "value": "={{ $json['Email'] }}",
+              "type": "string"
+            },
+            {
+              "id": "dc3a67fa-9631-477b-a1b9-8861340327dc",
+              "name": "Role: ",
+              "value": "={{ $json['Role '] }}",
+              "type": "string"
+            },
+            {
+              "id": "d304a63d-3d2a-4823-9141-e9b2a2debbad",
+              "name": "Start Date:",
+              "value": "={{ $json['Start Date'] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -640,
+        96
+      ],
+      "id": "4afcd99f-d1a4-4cac-ab32-8a42d5aa46b2",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "jsCode": "const tableData = $input.all().map((item) => item.json);\nreturn tableData;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -416,
+        96
+      ],
+      "id": "d132f866-6847-4714-b355-194d1ccb3666",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "batchSize": 4,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -240,
+        128
+      ],
+      "id": "ca33f12b-d861-4ec4-905e-a8e3ea45cbfd",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json['Email: '] }}",
+        "subject": "=Welcome to the team, {{ $json['First Name:'] }}!",
+        "message": "=Hi {{ $json['First Name:'] }},\n\nWelcome aboard! Your account has been set up.\n\nEmail: {{ $json['Email: '] }}\nRole: {{ $json['Role: '] }}\nStart Date: {{ $json['Start Date:'] }}\n\nLet us know if you need anything.\n\nBest,\nThe Operations Team",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        -32,
+        32
+      ],
+      "id": "c19443c4-86f2-4ddd-b141-bb2245564162",
+      "name": "Send a message",
+      "webhookId": "df72e509-d591-4e8c-aca4-9f22637d9579",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "mgX1PR9e8CFPZ2QB",
+          "name": "Gmail OAuth2 API"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Google Sheets Trigger": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "192464e7-a69c-4a93-b8e2-9ded9a6e06a6",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "68925c32f4d9302ecd204d1aa9a62f1dee5c7ff0aedc9a2df163a831d33dde5b"
+  },
+  "nodeGroups": [],
+  "id": "H0enrI0yt4GQJN74",
+  "tags": []
+}
