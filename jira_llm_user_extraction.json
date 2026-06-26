@@ -1,0 +1,288 @@
+{
+  "name": "Jira LLM User Extraction",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "7905d695-54a0-401f-8ace-aa4cb68cce51",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "url": "https://aashminp.atlassian.net/",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "5883d198-19b4-49e5-ae5d-d2955385c697",
+      "name": "HTTP Request",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "GkBisBQ3YvDAwRun",
+          "name": "Unnamed credential"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "returnAll": true,
+        "options": {
+          "jql": "=project = SCRUM\n"
+        }
+      },
+      "type": "n8n-nodes-base.jira",
+      "typeVersion": 1,
+      "position": [
+        416,
+        0
+      ],
+      "id": "3ee5a451-a41d-4cfe-ac6b-957b44094e4b",
+      "name": "Get many issues",
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "credentials": {
+        "jiraSoftwareCloudApi": {
+          "id": "inByEos9zhkrgwRD",
+          "name": "Jira SW Cloud account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => {\n  const issue = item.json;\n\n  // Get the raw description\n  const rawDescription = issue.fields.description || '';\n\n  // Clean it up\n  const cleanedDescription = rawDescription\n    .replace(/\\\\n/g, '\\n')                          // Convert escaped newlines\n    .replace(/\\[([^\\]]+)\\]\\([^)]+\\)/g, '$1')        // Convert [email](mailto:email) to just email\n    .replace(/<\\/?[^>]+(>|$)/g, \"\")                 // Remove any HTML tags (just in case)\n    .replace(/\\s+/g, ' ')                           // Normalize spacing\n    .trim();\n\n  return {\n    json: {\n      Summary: issue.fields.summary,\n      Status: issue.fields.status.name,\n      Assignee: issue.fields.assignee ? issue.fields.assignee.displayName : 'Unassigned',\n      Reporter: issue.fields.reporter.displayName,\n      Description: cleanedDescription, // ⬅️ use this cleaned version\n    }\n  };\n});\n\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        624,
+        0
+      ],
+      "id": "33296a95-c15a-472f-afa2-0bf3ac5d1707",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "GPT-4O-MINI"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Extract the user's information from the following Jira ticket description. You must respond with ONLY a raw JSON object, no explanation, no markdown, no code fences. Just the JSON object itself.\n\nUse these exact keys: \"firstName\", \"lastName\", \"email\", \"location\"\n\nIf any field cannot be found, use an empty string.\n\nJira ticket description:\n{{ $json[\"Description\"] }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        832,
+        0
+      ],
+      "id": "294dc83e-47f9-43af-97f3-52e6d85cbf85",
+      "name": "Message a model",
+      "credentials": {
+        "openAiApi": {
+          "id": "Qd8dgs1JM4baW6Ms",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => {\n  const content = item.json.message?.content;\n  if (!content) return { json: {} };\n\n  const clean = content\n    .replace(/```json\\n?/gi, '')\n    .replace(/```\\n?/gi, '')\n    .trim();\n\n  const data = JSON.parse(clean);\n\n  return {\n    json: {\n      \"First Name\": data.firstName || '',\n      \"Last Name\": data.lastName || '',\n      \"Email\": data.email || '',\n      \"Location\": data.location || ''\n    }\n  };\n});\n\n\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1184,
+        0
+      ],
+      "id": "dbbc0ee8-4d79-4890-95fb-deb43c6d77c6",
+      "name": "Code1"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1z3FXHTbWdoN2jRafzFp3m164Ad461jTAapyteF0PDfI",
+          "mode": "list",
+          "cachedResultName": "Jira User Extraction ",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1z3FXHTbWdoN2jRafzFp3m164Ad461jTAapyteF0PDfI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1z3FXHTbWdoN2jRafzFp3m164Ad461jTAapyteF0PDfI/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "First Name": "={{ $json[\"First Name\"] }}",
+            "Last Name": "={{ $json[\"Last Name\"] }}",
+            "Email ": "={{ $json[\"Email\"] }}",
+            "Location": "={{ $json[\"Location\"] }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "First Name",
+              "displayName": "First Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Last Name",
+              "displayName": "Last Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Email ",
+              "displayName": "Email ",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Location",
+              "displayName": "Location",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1392,
+        0
+      ],
+      "id": "c678c81d-f455-4159-848e-566a48adb59c",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "By0QvzZ4YvVtn0rF",
+          "name": "Google Sheets OAuth2 API"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Get many issues",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many issues": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "23383324-4643-4b6c-905c-3ae1a7cd6291",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "68925c32f4d9302ecd204d1aa9a62f1dee5c7ff0aedc9a2df163a831d33dde5b"
+  },
+  "nodeGroups": [],
+  "id": "2xA9TsRJutIU6CAN",
+  "tags": []
+}
